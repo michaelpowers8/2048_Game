@@ -1,15 +1,19 @@
 import random
-import numpy as np
-from typing import List, Tuple, Callable
+import pygame
+import sys
+from typing import List, Tuple
 from grid import start_game, move_up, move_down, move_left, move_right, get_current_state, add_new_2
+from window import load_screen, draw_grid, write_seeds
+from tile import draw_all_tiles
 import copy
 
 # Genetic Algorithm Parameters
 POPULATION_SIZE = 50
-INITIAL_GENOME_LENGTH = 5  # Starting length of genome
-GENOME_LENGTH_INCREMENT = 5  # How much to increase genome length by
-INCREMENT_EVERY = 10  # Generations between length increases
+INITIAL_GENOME_LENGTH = 5
+GENOME_LENGTH_INCREMENT = 5
+INCREMENT_EVERY = 25
 MUTATION_RATE = 0.1
+GENERATIONS = 1000
 
 # ELITISM_RATE determines what percentage of the top-performing individuals
 # get carried over to the next generation unchanged.
@@ -18,14 +22,19 @@ MUTATION_RATE = 0.1
 # - Lower values allow more exploration but may lose good solutions
 ELITISM_RATE = 0.2
 
-GENERATIONS = 50
-
 # Movement mapping
 MOVES = {
     0: move_up,
     1: move_down,
     2: move_left,
     3: move_right
+}
+
+MOVE_NAMES = {
+    0: "UP",
+    1: "DOWN",
+    2: "LEFT",
+    3: "RIGHT"
 }
 
 class Individual:
@@ -54,7 +63,6 @@ def evaluate_fitness(individual: Individual) -> int:
     
     grid = start_game(server_seed, client_seed, nonce)
     total_score = 0
-    move_count = 0
     
     for move_gene in individual.genome:
         move_func = MOVES[move_gene]
@@ -63,10 +71,8 @@ def evaluate_fitness(individual: Individual) -> int:
         if changed:
             nonce += 1
             grid = new_grid
-            move_count += 1
             grid = add_new_2(grid, server_seed, client_seed, nonce)
             
-            # Score components
             max_tile = max(max(row) for row in grid)
             empty_cells = sum(row.count(0) for row in grid)
             total_score += max_tile * 10 + empty_cells * 5
@@ -75,34 +81,61 @@ def evaluate_fitness(individual: Individual) -> int:
             if state != 'GAME NOT OVER':
                 break
     
-    # Bonus for reaching higher tiles
     max_tile = max(max(row) for row in grid)
-    total_score += max_tile * 100
     
+    # Corner bonus (20% increase)
+    corner_bonus = 1.2 if max_tile in [grid[0][0], grid[0][-1], grid[-1][0], grid[-1][-1]] else 1.0
+    
+    # Chain bonus calculation
+    def calculate_chain_bonus(grid, max_tile):
+        # Find position of max tile
+        max_positions = [(i, j) for i in range(4) for j in range(4) if grid[i][j] == max_tile]
+        if not max_positions:
+            return 1.0
+        
+        total_bonus = 0.0
+        current_value = max_tile
+        
+        for (i, j) in max_positions:
+            # Check adjacent tiles for next values in the sequence
+            neighbors = [
+                (i-1, j), (i+1, j), (i, j-1), (i, j+1)  # Up, Down, Left, Right
+            ]
+            
+            # Filter valid neighbors
+            valid_neighbors = [
+                (x, y) for (x, y) in neighbors 
+                if 0 <= x < 4 and 0 <= y < 4 and grid[x][y] > 0
+            ]
+            
+            # Look for chain patterns
+            for x, y in valid_neighbors:
+                if grid[x][y] == current_value // 2:  # Next in sequence (e.g., 1024 -> 512)
+                    total_bonus += 0.1  # 10% bonus per link in chain
+                    # Optional: Recursively check for longer chains
+                    # total_bonus += 0.05 * calculate_chain_bonus(grid, current_value // 2)
+        
+        return 1.0 + min(total_bonus, 0.5)  # Cap chain bonus at 50%
+    
+    chain_bonus = calculate_chain_bonus(grid, max_tile)
+    
+    # Apply bonuses
+    total_score += max_tile * 100 * corner_bonus * chain_bonus
     individual.fitness = total_score
     return total_score
-
 def create_new_generation(population: List[Individual], genome_length: int) -> List[Individual]:
-    """Create a new generation using selection, crossover and mutation"""
     population.sort(key=lambda x: x.fitness, reverse=True)
     new_population = []
     
-    # ELITISM_RATE implementation:
-    # The top ELITISM_RATE percentage of individuals are carried over unchanged
     elite_size = int(ELITISM_RATE * POPULATION_SIZE)
     new_population.extend(population[:elite_size])
     
-    # Tournament selection and crossover for remaining spots
     while len(new_population) < POPULATION_SIZE:
-        # Select parents through tournament selection
         tournament = random.sample(population, k=4)
         tournament.sort(key=lambda x: x.fitness, reverse=True)
         parent1, parent2 = tournament[0], tournament[1]
         
-        # Create offspring through crossover
         child1, child2 = parent1.crossover(parent2)
-        
-        # Apply mutation
         child1.mutate()
         child2.mutate()
         
@@ -113,38 +146,93 @@ def create_new_generation(population: List[Individual], genome_length: int) -> L
     return new_population[:POPULATION_SIZE]
 
 def run_genetic_algorithm():
-    """Main function to run the genetic algorithm"""
     current_genome_length = INITIAL_GENOME_LENGTH
     population = [Individual(current_genome_length) for _ in range(POPULATION_SIZE)]
     
     for generation in range(GENERATIONS):
-        # Increase genome length every INCREMENT_EVERY generations
         if generation > 0 and generation % INCREMENT_EVERY == 0:
             current_genome_length += GENOME_LENGTH_INCREMENT
-            print(f"Increasing genome length to {current_genome_length}")
-            
-            # Extend existing individuals' genomes with random moves
+            #print(f"Increasing genome length to {current_genome_length}")
             for individual in population:
-                individual.genome.extend(
-                    [random.randint(0, 3) for _ in range(GENOME_LENGTH_INCREMENT)]
-                )
+                individual.genome.extend([random.randint(0, 3) for _ in range(GENOME_LENGTH_INCREMENT)])
         
-        # Evaluate fitness
         for individual in population:
             evaluate_fitness(individual)
         
-        # Create new generation
         population = create_new_generation(population, current_genome_length)
         
-        # Print stats
         best_fitness = max(ind.fitness for ind in population)
         avg_fitness = sum(ind.fitness for ind in population) / POPULATION_SIZE
-        print(f"Gen {generation + 1}: Best = {best_fitness}, Avg = {avg_fitness}, Genome Len = {current_genome_length}")
+        if((generation+1)%250==0):
+            print(f"Gen {generation + 1}: Best = {best_fitness}, Avg = {avg_fitness}, Genome Len = {current_genome_length}")
     
     return max(population, key=lambda x: x.fitness)
 
+def play_best_individual(best_individual: Individual):
+    """Visualize the best individual playing the game with Pygame"""
+    pygame.init()
+    screen = load_screen()
+    clock = pygame.time.Clock()
+    font = pygame.font.SysFont('Arial', 24)
+    
+    server_seed = "abcdefghijklmnopqrstvwxyz"
+    client_seed = "1234567890"
+    nonce = 1
+    
+    grid = start_game(server_seed, client_seed, nonce)
+    move_index = 0
+    
+    running = True
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+                pygame.quit()
+                sys.exit()
+        
+        if move_index < len(best_individual.genome):
+            move_gene = best_individual.genome[move_index]
+            move_func = MOVES[move_gene]
+            new_grid, changed = move_func(copy.deepcopy(grid))
+            
+            if changed:
+                nonce += 1
+                grid = new_grid
+                grid = add_new_2(grid, server_seed, client_seed, nonce)
+                              
+                # Draw everything
+                screen.fill((255, 255, 255))
+                draw_grid(screen)
+                write_seeds(screen, server_seed, client_seed)
+                draw_all_tiles(screen, grid)
+                
+                # Display current move information
+                move_text = font.render(f"Move {move_index}/{len(best_individual.genome)}: {MOVE_NAMES[move_gene]}", True, (0, 0, 0))
+                screen.blit(move_text, (20, 650))
+                
+                pygame.display.flip()
+                clock.tick(2)  # 2 moves per second
+            
+            state = get_current_state(grid)
+            if state != 'GAME NOT OVER':
+                result_text = font.render(f"Game Over: {state}", True, (255, 0, 0))
+                screen.blit(result_text, (300, 650))
+                pygame.display.flip()
+                pygame.time.wait(3000)  # Show result for 3 seconds
+                running = False
+            move_index += 1
+        else:
+            running = False
+        
+    pygame.quit()
+
 if __name__ == "__main__":
     best_individual = run_genetic_algorithm()
+    written_genome:list[str] = []
+    for best_move in best_individual.genome:
+        written_genome.append(MOVE_NAMES[best_move])
     print(f"\nBest individual achieved fitness: {best_individual.fitness}")
     print(f"Genome length: {len(best_individual.genome)}")
-    print(f"Sample moves: {best_individual.genome[:10]}...")
+    print(f"Best sequence: {written_genome}")
+    print("Launching Pygame visualization...")
+    play_best_individual(best_individual)
