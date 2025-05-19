@@ -1,7 +1,6 @@
 import random
 import hmac
 import hashlib
-import random
 import string
 from math import floor
 
@@ -33,14 +32,6 @@ def seeds_to_hexadecimals(server_seed:str,client_seed:str,nonce:int) -> list[str
 def hexadecimal_to_bytes(hexadecimal:str) -> list[int]:
     return list(bytes.fromhex(hexadecimal))
 
-def bytes_to_basic_number(bytes_list: list[int]) -> int:
-    # Calculate a weighted index based on the first four bytes
-    number:float = ((float(bytes_list[0]) / float(256**1)) +
-              (float(bytes_list[1]) / float(256**2)) +
-              (float(bytes_list[2]) / float(256**3)) +
-              (float(bytes_list[3]) / float(256**4)))
-    return number
-
 def bytes_to_number(bytes_list: list[int],multiplier:int) -> int:
     # Calculate a weighted index based on the first four bytes
     number:float =  (
@@ -51,9 +42,6 @@ def bytes_to_number(bytes_list: list[int],multiplier:int) -> int:
                     )
     number = number*multiplier
     return number
-
-def number_to_shuffle(number:int,row:list[int]):
-    return row[number]
 
 def seeds_to_results(server_seed:str,client_seed:str,nonce:int) -> list[list[int]]:
     shuffle:list[int] = list(range(16))
