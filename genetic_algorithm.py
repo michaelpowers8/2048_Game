@@ -238,8 +238,8 @@ if __name__ == "__main__":
     print("Launching Pygame visualization...")
     play_best_individual(best_individual)
     with open("Best_Sequence.json","w") as file:
-        json.dump(written_genome)
-        json.dump(best_individual.genome)
+        json.dump(written_genome,file)
+        json.dump(best_individual.genome,file)
     with open("Best_Individual.txt",'w') as file:
         file.write(best_individual)
         file.write('\n')
