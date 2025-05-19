@@ -6,6 +6,7 @@ from grid import start_game, move_up, move_down, move_left, move_right, get_curr
 from window import load_screen, draw_grid, write_seeds
 from tile import draw_all_tiles
 import copy
+import json
 
 # Genetic Algorithm Parameters
 POPULATION_SIZE = 50
@@ -13,7 +14,7 @@ INITIAL_GENOME_LENGTH = 5
 GENOME_LENGTH_INCREMENT = 5
 INCREMENT_EVERY = 25
 MUTATION_RATE = 0.1
-GENERATIONS = 1000
+GENERATIONS = 500
 
 # ELITISM_RATE determines what percentage of the top-performing individuals
 # get carried over to the next generation unchanged.
@@ -84,7 +85,7 @@ def evaluate_fitness(individual: Individual) -> int:
     max_tile = max(max(row) for row in grid)
     
     # Corner bonus (20% increase)
-    corner_bonus = 1.2 if max_tile in [grid[0][0], grid[0][-1], grid[-1][0], grid[-1][-1]] else 1.0
+    corner_bonus = 1.5 if max_tile in [grid[0][0], grid[0][-1], grid[-1][0], grid[-1][-1]] else 1.0
     
     # Chain bonus calculation
     def calculate_chain_bonus(grid, max_tile):
@@ -236,3 +237,12 @@ if __name__ == "__main__":
     print(f"Best sequence: {written_genome}")
     print("Launching Pygame visualization...")
     play_best_individual(best_individual)
+    with open("Best_Sequence.json","w") as file:
+        json.dump(written_genome)
+        json.dump(best_individual.genome)
+    with open("Best_Individual.txt",'w') as file:
+        file.write(best_individual)
+        file.write('\n')
+        file.write(best_individual.fitness)
+        file.write('\n')
+        file.write(best_individual.genome)
