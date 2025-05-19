@@ -80,6 +80,7 @@ def evaluate_fitness(individual: Individual) -> int:
             
             state = get_current_state(grid)
             if state != 'GAME NOT OVER':
+                total_score *= 0.3
                 break
     
     max_tile = max(max(row) for row in grid)
@@ -241,8 +242,6 @@ if __name__ == "__main__":
         json.dump(written_genome,file)
         json.dump(best_individual.genome,file)
     with open("Best_Individual.txt",'w') as file:
-        file.write(best_individual)
+        file.write(str(best_individual.fitness))
         file.write('\n')
-        file.write(best_individual.fitness)
-        file.write('\n')
-        file.write(best_individual.genome)
+        file.write(",".join(best_individual.genome))
