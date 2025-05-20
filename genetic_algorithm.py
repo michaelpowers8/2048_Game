@@ -9,12 +9,12 @@ import copy
 import json
 
 # Genetic Algorithm Parameters
-POPULATION_SIZE = 500
+POPULATION_SIZE = 10
 INITIAL_GENOME_LENGTH = 5
 GENOME_LENGTH_INCREMENT = 5
-INCREMENT_EVERY = 25
-MUTATION_RATE = 0.1
-GENERATIONS = 10_000
+INCREMENT_EVERY = 1
+MUTATION_RATE = 0.15
+GENERATIONS = 100
 
 # ELITISM_RATE determines what percentage of the top-performing individuals
 # get carried over to the next generation unchanged.
@@ -135,6 +135,32 @@ def evaluate_fitness(individual: Individual) -> int:
     individual.fitness = total_score
     return total_score
 
+def get_max_tile(genome:list[int]):
+    """Simulate a game using the individual's genome and return the fitness score"""
+    server_seed = "abcdefghijklmnopqrstvwxyz"
+    client_seed = "1234567890"
+    nonce = 1
+    
+    grid = start_game(server_seed, client_seed, nonce)
+
+    for move_gene in genome:
+        move_func = MOVES[move_gene]
+        new_grid, changed = move_func(copy.deepcopy(grid))
+        
+        if changed:
+            nonce += 1
+            grid = new_grid
+            grid = add_new_2(grid, server_seed, client_seed, nonce)
+            
+            max_tile = max(max(row) for row in grid)
+            
+            state = get_current_state(grid)
+            if state != 'GAME NOT OVER':
+                break
+    
+    max_tile = max(max(row) for row in grid)
+    return max_tile
+
 def create_new_generation(population: List[Individual], genome_length: int, generation_number:int) -> List[Individual]:
     population.sort(key=lambda x: x.fitness, reverse=True)
     new_population = []
@@ -238,7 +264,16 @@ def play_best_individual(best_individual: Individual):
         
     pygame.quit()
 
+def play_previously_saved_individual():
+    with open("Best_Sequence.json","r") as file:
+        data:list[int] = json.load(file)
+    individual_to_play:Individual = Individual(len(data))
+    individual_to_play.genome = data.copy()
+    play_best_individual(individual_to_play)
+
 if __name__ == "__main__":
+    if(True):
+        play_previously_saved_individual()
     best_individual = run_genetic_algorithm()
     written_genome:list[str] = []
     for best_move in best_individual.genome:
@@ -246,7 +281,18 @@ if __name__ == "__main__":
     print(f"\nBest individual achieved fitness: {best_individual.fitness}")
     print(f"Genome length: {len(best_individual.genome)}")
     print("Launching Pygame visualization...")
-    play_best_individual(best_individual)
     with open("Best_Sequence.json","w") as file:
-        json.dump(written_genome,file)
-        json.dump(best_individual.genome,file)
+        data:dict[str,str|int|float|list[int]] = {
+                    "Best_Individual_Representation":repr(best_individual),
+                    "Best_Individual_ID":id(best_individual),
+                    "Best_Fitness":best_individual.fitness,
+                    "Best_Sequence":f"[{','.join([str(x) for x in best_individual.genome])}]",
+                    "Number_of_Generations":GENERATIONS,
+                    "Number_of_Moves":len(best_individual.genome),
+                    "Initial_Mutation_Rate":(MUTATION_RATE),
+                    "End_Mutation_Rate":get_mutation_rate(GENERATIONS),
+                    "Biggest_Tile_Reached":get_max_tile(best_individual.genome)
+                }
+        json.dump(data,file,indent=4)
+    while True:
+        play_best_individual(best_individual)
