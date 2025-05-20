@@ -85,7 +85,7 @@ def evaluate_fitness(individual: Individual) -> int:
     
     max_tile = max(max(row) for row in grid)
     
-    # Corner bonus (50% increase and 20% bonus if the max tile is one of the 4 center tiles) 
+    # Corner bonus (50% increase and 20% penalty if the max tile is one of the 4 center tiles) 
     corner_bonus = 1.5 if max_tile in [grid[0][0], grid[0][-1], grid[-1][0], grid[-1][-1]] else 1.0
     corner_bonus = 0.8 if max_tile in [grid[1][1], grid[1][2], grid[2][1], grid[2][2]] else 1.0
     
