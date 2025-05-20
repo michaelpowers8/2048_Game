@@ -9,19 +9,19 @@ import copy
 import json
 
 # Genetic Algorithm Parameters
-POPULATION_SIZE = 50
+POPULATION_SIZE = 500
 INITIAL_GENOME_LENGTH = 5
 GENOME_LENGTH_INCREMENT = 5
 INCREMENT_EVERY = 25
 MUTATION_RATE = 0.1
-GENERATIONS = 500
+GENERATIONS = 5_000
 
 # ELITISM_RATE determines what percentage of the top-performing individuals
 # get carried over to the next generation unchanged.
 # - Value between 0.0 and 1.0 (typically 0.1-0.3)
 # - Higher values preserve good solutions but may reduce diversity
 # - Lower values allow more exploration but may lose good solutions
-ELITISM_RATE = 0.2
+ELITISM_RATE = 0.3
 
 # Movement mapping
 MOVES = {
@@ -85,8 +85,9 @@ def evaluate_fitness(individual: Individual) -> int:
     
     max_tile = max(max(row) for row in grid)
     
-    # Corner bonus (20% increase)
+    # Corner bonus (50% increase and 20% bonus if the max tile is one of the 4 center tiles) 
     corner_bonus = 1.5 if max_tile in [grid[0][0], grid[0][-1], grid[-1][0], grid[-1][-1]] else 1.0
+    corner_bonus = 0.8 if max_tile in [grid[1][1], grid[1][2], grid[2][1], grid[2][2]] else 1.0
     
     # Chain bonus calculation
     def calculate_chain_bonus(grid, max_tile):
@@ -125,6 +126,7 @@ def evaluate_fitness(individual: Individual) -> int:
     total_score += max_tile * 100 * corner_bonus * chain_bonus
     individual.fitness = total_score
     return total_score
+
 def create_new_generation(population: List[Individual], genome_length: int) -> List[Individual]:
     population.sort(key=lambda x: x.fitness, reverse=True)
     new_population = []
@@ -235,13 +237,8 @@ if __name__ == "__main__":
         written_genome.append(MOVE_NAMES[best_move])
     print(f"\nBest individual achieved fitness: {best_individual.fitness}")
     print(f"Genome length: {len(best_individual.genome)}")
-    print(f"Best sequence: {written_genome}")
     print("Launching Pygame visualization...")
     play_best_individual(best_individual)
     with open("Best_Sequence.json","w") as file:
         json.dump(written_genome,file)
         json.dump(best_individual.genome,file)
-    with open("Best_Individual.txt",'w') as file:
-        file.write(str(best_individual.fitness))
-        file.write('\n')
-        file.write(",".join(best_individual.genome))
