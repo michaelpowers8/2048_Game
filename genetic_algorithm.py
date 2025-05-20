@@ -58,8 +58,8 @@ class Individual:
     
 def get_mutation_rate(generation: int) -> float:
     initial_rate = 0.15  # 10%
-    final_rate = 0.01    # 1%
-    decay_generations = 5000  # Linearly decay over 5,000 gens
+    final_rate = 0.001    # 1%
+    decay_generations = 7500  # Linearly decay over 5,000 gens
     if generation >= decay_generations:
         return final_rate
     return initial_rate - (initial_rate - final_rate) * (generation / decay_generations)
