@@ -14,7 +14,7 @@ INITIAL_GENOME_LENGTH = 5
 GENOME_LENGTH_INCREMENT = 5
 INCREMENT_EVERY = 25
 MUTATION_RATE = 0.1
-GENERATIONS = 5_000
+GENERATIONS = 10_000
 
 # ELITISM_RATE determines what percentage of the top-performing individuals
 # get carried over to the next generation unchanged.
@@ -43,9 +43,9 @@ class Individual:
         self.genome = [random.randint(0, 3) for _ in range(genome_length)]
         self.fitness = 0
     
-    def mutate(self):
+    def mutate(self,generation_number:int):
         for i in range(len(self.genome)):
-            if random.random() < MUTATION_RATE:
+            if random.random() < get_mutation_rate(generation_number):
                 self.genome[i] = random.randint(0, 3)
     
     def crossover(self, other: 'Individual') -> Tuple['Individual', 'Individual']:
@@ -55,6 +55,14 @@ class Individual:
         child2 = Individual(len(self.genome))
         child2.genome = other.genome[:crossover_point] + self.genome[crossover_point:]
         return child1, child2
+    
+def get_mutation_rate(generation: int) -> float:
+    initial_rate = 0.15  # 10%
+    final_rate = 0.01    # 1%
+    decay_generations = 5000  # Linearly decay over 5,000 gens
+    if generation >= decay_generations:
+        return final_rate
+    return initial_rate - (initial_rate - final_rate) * (generation / decay_generations)
 
 def evaluate_fitness(individual: Individual) -> int:
     """Simulate a game using the individual's genome and return the fitness score"""
@@ -127,7 +135,7 @@ def evaluate_fitness(individual: Individual) -> int:
     individual.fitness = total_score
     return total_score
 
-def create_new_generation(population: List[Individual], genome_length: int) -> List[Individual]:
+def create_new_generation(population: List[Individual], genome_length: int, generation_number:int) -> List[Individual]:
     population.sort(key=lambda x: x.fitness, reverse=True)
     new_population = []
     
@@ -140,8 +148,8 @@ def create_new_generation(population: List[Individual], genome_length: int) -> L
         parent1, parent2 = tournament[0], tournament[1]
         
         child1, child2 = parent1.crossover(parent2)
-        child1.mutate()
-        child2.mutate()
+        child1.mutate(generation_number)
+        child2.mutate(generation_number)
         
         new_population.append(child1)
         if len(new_population) < POPULATION_SIZE:
@@ -163,12 +171,12 @@ def run_genetic_algorithm():
         for individual in population:
             evaluate_fitness(individual)
         
-        population = create_new_generation(population, current_genome_length)
+        population = create_new_generation(population, current_genome_length,generation)
         
         best_fitness = max(ind.fitness for ind in population)
         avg_fitness = sum(ind.fitness for ind in population) / POPULATION_SIZE
-        if((generation+1)%250==0):
-            print(f"Gen {generation + 1}: Best = {best_fitness}, Avg = {avg_fitness}, Genome Len = {current_genome_length}")
+        if((generation+1)%100==0):
+            print(f"Gen {generation + 1}: Best = {best_fitness}, Avg = {avg_fitness}, Genome Len = {current_genome_length}, Mutation Rate: {get_mutation_rate(generation)*100}%")
     
     return max(population, key=lambda x: x.fitness)
 
