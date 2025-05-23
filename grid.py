@@ -120,7 +120,7 @@ def get_current_state(mat):
     # 2048 we have won
     for i in range(4):
         for j in range(4):
-            if(mat[i][j]== 2048):
+            if(mat[i][j]== 1_000_000):
                 return 'WON'
 
     # if we are still left with
