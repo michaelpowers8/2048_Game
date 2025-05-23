@@ -9,12 +9,12 @@ import copy
 import json
 
 # Genetic Algorithm Parameters
-POPULATION_SIZE = 500
+POPULATION_SIZE = 1_000
 INITIAL_GENOME_LENGTH = 5
 GENOME_LENGTH_INCREMENT = 5
 INCREMENT_EVERY = 25
 MUTATION_RATE = 0.15
-GENERATIONS = 10_000
+GENERATIONS = 100_000
 
 # ELITISM_RATE determines what percentage of the top-performing individuals
 # get carried over to the next generation unchanged.
@@ -201,7 +201,7 @@ def run_genetic_algorithm():
         
         best_fitness = max(ind.fitness for ind in population)
         avg_fitness = sum(ind.fitness for ind in population) / POPULATION_SIZE
-        if((generation+1)%100==0):
+        if((generation+1)%1_000==0):
             print(f"Gen {generation + 1}: Best = {best_fitness}, Avg = {avg_fitness}, Genome Len = {current_genome_length}, Mutation Rate: {get_mutation_rate(generation)*100}%")
     
     return max(population, key=lambda x: x.fitness)
@@ -271,8 +271,9 @@ def play_previously_saved_individual():
     individual_to_play.genome = json.loads(data["Best_Sequence"])
     play_best_individual(individual_to_play)
 
-if __name__ == "__main__":
-    if(False):
+def main():
+    play_previous_best:bool = False
+    if(play_previous_best):
         play_previously_saved_individual()
     else:
         best_individual = run_genetic_algorithm()
@@ -295,5 +296,6 @@ if __name__ == "__main__":
                         "Biggest_Tile_Reached":get_max_tile(best_individual.genome)
                     }
             json.dump(data,file,indent=4)
-        while True:
-            play_best_individual(best_individual)
+
+if __name__ == "__main__":
+    main()
