@@ -11,10 +11,10 @@ import json
 # Genetic Algorithm Parameters
 POPULATION_SIZE = 1_000
 INITIAL_GENOME_LENGTH = 5
-GENOME_LENGTH_INCREMENT = 5
-INCREMENT_EVERY = 25
+GENOME_LENGTH_INCREMENT = 1
+INCREMENT_EVERY = 50
 MUTATION_RATE = 0.15
-GENERATIONS = 100_000
+GENERATIONS = 1_000_000
 
 # ELITISM_RATE determines what percentage of the top-performing individuals
 # get carried over to the next generation unchanged.
@@ -59,7 +59,7 @@ class Individual:
 def get_mutation_rate(generation: int) -> float:
     initial_rate = 0.15  # 10%
     final_rate = 0.001    # 0.1%
-    decay_generations = 9000  # Linearly decay over 9,000 gens
+    decay_generations = int(GENERATIONS*0.95)  # Linearly decay over 9,000 gens
     if generation >= decay_generations:
         return final_rate
     return initial_rate - (initial_rate - final_rate) * (generation / decay_generations)
@@ -90,6 +90,8 @@ def evaluate_fitness(individual: Individual) -> int:
             if state != 'GAME NOT OVER':
                 total_score *= 0.3
                 break
+        else:
+            total_score *= 0.9 # 10% penalty for not moving the grid effectively wasting turns.
     
     max_tile = max(max(row) for row in grid)
     
@@ -122,11 +124,11 @@ def evaluate_fitness(individual: Individual) -> int:
             # Look for chain patterns
             for x, y in valid_neighbors:
                 if grid[x][y] == current_value // 2:  # Next in sequence (e.g., 1024 -> 512)
-                    total_bonus += 0.1  # 10% bonus per link in chain
+                    total_bonus += 0.2  # 20% bonus per link in chain
                     # Optional: Recursively check for longer chains
                     # total_bonus += 0.05 * calculate_chain_bonus(grid, current_value // 2)
         
-        return 1.0 + min(total_bonus, 0.5)  # Cap chain bonus at 50%
+        return 1.0 + min(total_bonus, 1.0)  # Cap chain bonus at 50%
     
     chain_bonus = calculate_chain_bonus(grid, max_tile)
     
