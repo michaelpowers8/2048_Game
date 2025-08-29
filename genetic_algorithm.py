@@ -185,7 +185,7 @@ def create_new_generation(population: List[Individual], genome_length: int, gene
     
     return new_population[:POPULATION_SIZE]
 
-def run_genetic_algorithm():
+def run_genetic_algorithm():   
     current_genome_length = INITIAL_GENOME_LENGTH
     population = [Individual(current_genome_length) for _ in range(POPULATION_SIZE)]
     
@@ -203,8 +203,12 @@ def run_genetic_algorithm():
         
         best_fitness = max(ind.fitness for ind in population)
         avg_fitness = sum(ind.fitness for ind in population) / POPULATION_SIZE
+        best_fitness_individual = population[0]
+        for current_individual in population:
+            if current_individual.fitness > best_fitness_individual.fitness:
+                best_fitness_individual = current_individual
         if((generation+1)%1_000==0):
-            print(f"Gen {generation + 1}: Best = {best_fitness}, Avg = {avg_fitness}, Genome Len = {current_genome_length}, Mutation Rate: {get_mutation_rate(generation)*100}%")
+            print(f"Gen {generation + 1}: Highest Tile = {get_max_tile(best_fitness_individual.genome)}, Best = {best_fitness}, Avg = {avg_fitness}, Genome Len = {current_genome_length}, Mutation Rate: {get_mutation_rate(generation)*100}%")
     
     return max(population, key=lambda x: x.fitness)
 
