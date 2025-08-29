@@ -53,7 +53,7 @@ def seeds_to_results(server_seed:str,client_seed:str,nonce:int) -> list[list[int
     for bytes_list in bytes_lists:
         for index in range(0,len(bytes_list),4):
             if(len(row)<1): # First number is the value that the new block will contain
-                row.append(2 if bytes_to_number(bytes_list[index:index+4],1)<=0.5 else 4)
+                row.append(2 if bytes_to_number(bytes_list[index:index+4],1)<=0.9 else 4)
             else: # Remaining numbers are the order of positions the game will attempt to add the new tile.
                 row.append(floor(bytes_to_number(bytes_list[index:index+4],(multiplier))))
                 multiplier -= 1
