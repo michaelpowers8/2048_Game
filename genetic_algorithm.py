@@ -1,12 +1,13 @@
-import random
-import pygame
 import sys
-from typing import List, Tuple
-from grid import start_game, move_up, move_down, move_left, move_right, get_current_state, add_new_2
-from window import load_screen, draw_grid, write_seeds
-from tile import draw_all_tiles
 import copy
 import json
+import pygame
+import random
+from datetime import datetime
+from typing import List, Tuple
+from tile import draw_all_tiles
+from window import load_screen, draw_grid, write_seeds
+from grid import start_game, move_up, move_down, move_left, move_right, get_current_state, add_new_2
 
 # Genetic Algorithm Parameters
 POPULATION_SIZE = 100
@@ -206,7 +207,7 @@ def run_genetic_algorithm():
             if current_individual.fitness > best_fitness_individual.fitness:
                 best_fitness_individual = current_individual
         if((generation+1)%1_000==0):
-            print(f"Gen {generation + 1}: Highest Tile = {get_max_tile(best_fitness_individual.genome)}, Best = {best_fitness}, Avg = {avg_fitness}, Genome Len = {current_genome_length}, Mutation Rate: {get_mutation_rate(generation)*100}%")
+            print(f"{datetime.now()} Gen {generation + 1}: Highest Tile = {get_max_tile(best_fitness_individual.genome)}, Best = {best_fitness}, Avg = {avg_fitness}, Genome Len = {current_genome_length}, Mutation Rate: {get_mutation_rate(generation)*100}%")
     
     return max(population, key=lambda x: x.fitness)
 
@@ -274,7 +275,7 @@ def play_previously_saved_individual():
     play_best_individual(individual_to_play)
 
 def main():
-    play_previous_best:bool = False
+    play_previous_best:bool = True
     if(play_previous_best):
         play_previously_saved_individual()
     else:
