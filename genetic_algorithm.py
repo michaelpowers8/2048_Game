@@ -9,12 +9,14 @@ import copy
 import json
 
 # Genetic Algorithm Parameters
-POPULATION_SIZE = 1_000
+POPULATION_SIZE = 100
 INITIAL_GENOME_LENGTH = 5
 GENOME_LENGTH_INCREMENT = 1
 INCREMENT_EVERY = 50
 MUTATION_RATE = 0.15
-GENERATIONS = 1_000_000
+GENERATIONS = 10_000
+SERVER_SEED = "abcdefghijklmnopqrstvwxyz"
+CLIENT_SEED = "1234567890"
 
 # ELITISM_RATE determines what percentage of the top-performing individuals
 # get carried over to the next generation unchanged.
@@ -66,11 +68,9 @@ def get_mutation_rate(generation: int) -> float:
 
 def evaluate_fitness(individual: Individual) -> int:
     """Simulate a game using the individual's genome and return the fitness score"""
-    server_seed = "abcdefghijklmnopqrstvwxyz"
-    client_seed = "1234567890"
     nonce = 1
     
-    grid = start_game(server_seed, client_seed, nonce)
+    grid = start_game(SERVER_SEED, CLIENT_SEED, nonce)
     total_score = 0
     
     for move_gene in individual.genome:
@@ -80,7 +80,7 @@ def evaluate_fitness(individual: Individual) -> int:
         if changed:
             nonce += 1
             grid = new_grid
-            grid = add_new_2(grid, server_seed, client_seed, nonce)
+            grid = add_new_2(grid, SERVER_SEED, CLIENT_SEED, nonce)
             
             max_tile = max(max(row) for row in grid)
             empty_cells = sum(row.count(0) for row in grid)
@@ -139,11 +139,9 @@ def evaluate_fitness(individual: Individual) -> int:
 
 def get_max_tile(genome:list[int]):
     """Simulate a game using the individual's genome and return the fitness score"""
-    server_seed = "abcdefghijklmnopqrstvwxyz"
-    client_seed = "1234567890"
     nonce = 1
     
-    grid = start_game(server_seed, client_seed, nonce)
+    grid = start_game(SERVER_SEED, CLIENT_SEED, nonce)
 
     for move_gene in genome:
         move_func = MOVES[move_gene]
@@ -152,7 +150,7 @@ def get_max_tile(genome:list[int]):
         if changed:
             nonce += 1
             grid = new_grid
-            grid = add_new_2(grid, server_seed, client_seed, nonce)
+            grid = add_new_2(grid, SERVER_SEED, CLIENT_SEED, nonce)
             
             max_tile = max(max(row) for row in grid)
             
@@ -219,11 +217,9 @@ def play_best_individual(best_individual: Individual):
     clock = pygame.time.Clock()
     font = pygame.font.SysFont('Arial', 24)
     
-    server_seed = "abcdefghijklmnopqrstvwxyz"
-    client_seed = "1234567890"
     nonce = 1
     
-    grid = start_game(server_seed, client_seed, nonce)
+    grid = start_game(SERVER_SEED, CLIENT_SEED, nonce)
     move_index = 0
     
     running = True
@@ -242,12 +238,12 @@ def play_best_individual(best_individual: Individual):
             if changed:
                 nonce += 1
                 grid = new_grid
-                grid = add_new_2(grid, server_seed, client_seed, nonce)
+                grid = add_new_2(grid, SERVER_SEED, CLIENT_SEED, nonce)
                               
                 # Draw everything
                 screen.fill((255, 255, 255))
                 draw_grid(screen)
-                write_seeds(screen, server_seed, client_seed)
+                write_seeds(screen, SERVER_SEED, CLIENT_SEED)
                 draw_all_tiles(screen, grid)
                 
                 # Display current move information
