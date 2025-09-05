@@ -10,12 +10,12 @@ from window import load_screen, draw_grid, write_seeds
 from grid import start_game, move_up, move_down, move_left, move_right, get_current_state, add_new_2
 
 # Genetic Algorithm Parameters
-POPULATION_SIZE = 100
+POPULATION_SIZE = 20
 INITIAL_GENOME_LENGTH = 5
 GENOME_LENGTH_INCREMENT = 1
 INCREMENT_EVERY = 50
 MUTATION_RATE = 0.15
-GENERATIONS = 10_000
+GENERATIONS = 100_000
 SERVER_SEED = "abcdefghijklmnopqrstvwxyz"
 CLIENT_SEED = "1234567890"
 
@@ -275,7 +275,7 @@ def play_previously_saved_individual():
     play_best_individual(individual_to_play)
 
 def main():
-    play_previous_best:bool = True
+    play_previous_best:bool = False
     if(play_previous_best):
         play_previously_saved_individual()
     else:
